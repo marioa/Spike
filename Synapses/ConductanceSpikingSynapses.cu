@@ -271,6 +271,7 @@ void ConductanceSpikingSynapses::interact_spikes_with_synapses(SpikingNeurons * 
 									neurons->d_last_spike_time_of_each_neuron,
 									input_neurons->d_last_spike_time_of_each_neuron,
 									d_synaptic_conductances_g,
+									d_decay_terms_tau_g,
 									current_time_in_seconds,
 									d_num_active_synapses,
 									d_active_synapses,
@@ -316,6 +317,7 @@ __global__ void get_active_synapses_kernel(int* d_presynaptic_neuron_indices,
 								float* d_last_spike_time_of_each_neuron,
 								float* d_input_neurons_last_spike_time,
 								float * d_synaptic_conductances_g,
+								float * d_decay_terms_tau_g,
 								float current_time_in_seconds,
 								int* d_num_active_synapses,
 								int* d_active_synapses,
@@ -328,37 +330,22 @@ __global__ void get_active_synapses_kernel(int* d_presynaptic_neuron_indices,
 		int presynaptic_neuron_index = d_presynaptic_neuron_indices[idx];
 		bool presynaptic_is_input = PRESYNAPTIC_IS_INPUT(presynaptic_neuron_index);
 		int delay = d_delays[idx];
-		bool stored = false;
 
 		// Check if the presynaptic neuron spiked less than the delay ago
 		if (presynaptic_is_input){
-			if ((d_input_neurons_last_spike_time[CORRECTED_PRESYNAPTIC_ID(presynaptic_neuron_index, presynaptic_is_input)] + (delay + 1)*timestep) > current_time_in_seconds){
+			if ((d_input_neurons_last_spike_time[CORRECTED_PRESYNAPTIC_ID(presynaptic_neuron_index, presynaptic_is_input)] + (delay + 1)*timestep + 20.0f*d_decay_terms_tau_g[idx]) > current_time_in_seconds){
 				int pos = atomicAdd(&d_num_active_synapses[0], 1);
 				d_active_synapses[pos] = idx;
-				stored = true;
 			}
 		} else {
-			if ((d_last_spike_time_of_each_neuron[presynaptic_neuron_index] + (delay + 1)*timestep) > current_time_in_seconds){
+			if ((d_last_spike_time_of_each_neuron[presynaptic_neuron_index] + (delay + 1)*timestep + 20.0f*d_decay_terms_tau_g[idx]) > current_time_in_seconds){
 				int pos = atomicAdd(&d_num_active_synapses[0], 1);
 				d_active_synapses[pos] = idx;
-				stored = true;
 			}
 		}
-
-		// Check the unstored synapses for any conductance that needs to be reduced
-		// Using 10^-7 as a cut off due to precision of float32
-		if (stored == false){
-		 	if (d_synaptic_conductances_g[idx] > 1*pow(10.0, -6)){
-				int pos = atomicAdd(&d_num_active_synapses[0], 1);
-				d_active_synapses[pos] = idx;
-				stored = true;
-			} else {
-				d_synaptic_conductances_g[idx] = 0.0f;
-			}
-		}
-
 		idx += blockDim.x * gridDim.x;
 	}
+	__syncthreads();
 }
 
 
