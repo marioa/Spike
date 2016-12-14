@@ -330,19 +330,15 @@ __global__ void get_active_synapses_kernel(int* d_presynaptic_neuron_indices,
 		int presynaptic_neuron_index = d_presynaptic_neuron_indices[idx];
 		bool presynaptic_is_input = PRESYNAPTIC_IS_INPUT(presynaptic_neuron_index);
 		int delay = d_delays[idx];
+		float effecttime = presynaptic_is_input ? d_input_neurons_last_spike_time[CORRECTED_PRESYNAPTIC_ID(presynaptic_neuron_index, presynaptic_is_input)] : d_last_spike_time_of_each_neuron[presynaptic_neuron_index];
+		// Add to the effect time the length of a delay and a decay time ~10 tau (When current injection has reduced to 0.005% of the original value)
+		effecttime += (delay + 1)*timestep + 10.0f*d_decay_terms_tau_g[idx];
 
-		// Check if the presynaptic neuron spiked less than the delay ago
-		if (presynaptic_is_input){
-			if ((d_input_neurons_last_spike_time[CORRECTED_PRESYNAPTIC_ID(presynaptic_neuron_index, presynaptic_is_input)] + (delay + 1)*timestep + 20.0f*d_decay_terms_tau_g[idx]) > current_time_in_seconds){
-				int pos = atomicAdd(&d_num_active_synapses[0], 1);
-				d_active_synapses[pos] = idx;
-			}
-		} else {
-			if ((d_last_spike_time_of_each_neuron[presynaptic_neuron_index] + (delay + 1)*timestep + 20.0f*d_decay_terms_tau_g[idx]) > current_time_in_seconds){
-				int pos = atomicAdd(&d_num_active_synapses[0], 1);
-				d_active_synapses[pos] = idx;
-			}
+		if (effecttime > current_time_in_seconds){
+			int pos = atomicAdd(&d_num_active_synapses[0], 1);
+			d_active_synapses[pos] = idx;
 		}
+
 		idx += blockDim.x * gridDim.x;
 	}
 	__syncthreads();
