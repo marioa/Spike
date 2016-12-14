@@ -40,6 +40,8 @@ ConductanceSpikingSynapses::~ConductanceSpikingSynapses() {
 	CudaSafeCall(cudaFree(d_biological_conductance_scaling_constants_lambda));
 	CudaSafeCall(cudaFree(d_reversal_potentials_Vhat));
 	CudaSafeCall(cudaFree(d_decay_terms_tau_g));
+	CudaSafeCall(cudaFree(d_active_synapses));
+	CudaSafeCall(cudaFree(d_num_active_synapses));
 }
 
 

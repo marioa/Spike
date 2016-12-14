@@ -22,6 +22,7 @@
 #include <curand.h>
 #include <curand_kernel.h>
 
+#include "../Helpers/RandomStateManager.h"
 
 /*!
 	This enum contains the possible connectivity types which can be requested
@@ -143,13 +144,9 @@ public:
   */
 	virtual void shuffle_synapses();
 
-<<<<<<< HEAD
-=======
+
 protected:
 	RandomStateManager * random_state_manager;
->>>>>>> origin/dev_master
-
-
 
 };
 
