@@ -41,16 +41,16 @@ SpikingSynapses::~SpikingSynapses() {
 //		2 number float array for delay range
 //		Boolean value to indicate if population is STDP based
 //		Parameter = either probability for random synapses or S.D. for Gaussian
-void SpikingSynapses::AddGroup(int presynaptic_group_id, 
-						int postsynaptic_group_id, 
+void SpikingSynapses::AddGroup(int presynaptic_group_id,
+						int postsynaptic_group_id,
 						Neurons * neurons,
 						Neurons * input_neurons,
 						float timestep,
 						synapse_parameters_struct * synapse_params) {
-	
-	
-	Synapses::AddGroup(presynaptic_group_id, 
-							postsynaptic_group_id, 
+
+
+	Synapses::AddGroup(presynaptic_group_id,
+							postsynaptic_group_id,
 							neurons,
 							input_neurons,
 							timestep,
@@ -59,7 +59,7 @@ void SpikingSynapses::AddGroup(int presynaptic_group_id,
 	spiking_synapse_parameters_struct * spiking_synapse_group_params = (spiking_synapse_parameters_struct*)synapse_params;
 
 	for (int i = (total_number_of_synapses - temp_number_of_synapses_in_last_group); i < total_number_of_synapses; i++){
-		
+
 		// Convert delay range from time to number of timesteps
 		int delay_range_in_timesteps[2] = {int(round(spiking_synapse_group_params->delay_range[0]/timestep)), int(round(spiking_synapse_group_params->delay_range[1]/timestep))};
 
@@ -110,12 +110,12 @@ void SpikingSynapses::allocate_device_pointers() {
 	CudaSafeCall(cudaMalloc((void **)&d_spikes_travelling_to_synapse, sizeof(int)*total_number_of_synapses));
 	CudaSafeCall(cudaMalloc((void **)&d_time_of_last_spike_to_reach_synapse, sizeof(float)*total_number_of_synapses));
 
-	
+
 }
 
 
 void SpikingSynapses::copy_constants_and_initial_efficacies_to_device() {
-	
+
 	Synapses::copy_constants_and_initial_efficacies_to_device();
 
 	CudaSafeCall(cudaMemcpy(d_delays, delays, sizeof(int)*total_number_of_synapses, cudaMemcpyHostToDevice));
@@ -125,7 +125,7 @@ void SpikingSynapses::copy_constants_and_initial_efficacies_to_device() {
 
 
 void SpikingSynapses::reset_synapse_activities() {
-	
+
 	CudaSafeCall(cudaMemset(d_spikes_travelling_to_synapse, 0, sizeof(int)*total_number_of_synapses));
 	// Set last spike times to -1000 so that the times do not affect current simulation.
 	float* last_spike_to_reach_synapse;
@@ -139,7 +139,7 @@ void SpikingSynapses::reset_synapse_activities() {
 
 
 void SpikingSynapses::shuffle_synapses() {
-	
+
 	Synapses::shuffle_synapses();
 
 	int * temp_delays = (int *)malloc(total_number_of_synapses*sizeof(int));
@@ -158,9 +158,9 @@ void SpikingSynapses::shuffle_synapses() {
 
 
 void SpikingSynapses::set_threads_per_block_and_blocks_per_grid(int threads) {
-	
+
 	Synapses::set_threads_per_block_and_blocks_per_grid(threads);
-	
+
 }
 
 void SpikingSynapses::interact_spikes_with_synapses(SpikingNeurons * neurons, SpikingNeurons * input_neurons, float current_time_in_seconds, float timestep) {
@@ -234,7 +234,7 @@ __global__ void move_spikes_towards_synapses_kernel(int* d_presynaptic_neuron_in
 				timesteps_until_spike_reaches_synapse = d_delays[idx];
 
 			}
-		} 
+		}
 
 		d_spikes_travelling_to_synapse[idx] = timesteps_until_spike_reaches_synapse;
 
@@ -253,7 +253,7 @@ __global__ void check_bitarray_for_presynaptic_neuron_spikes(int* d_presynaptic_
 								float timestep,
 								size_t total_number_of_synapses,
 								float* d_time_of_last_spike_to_reach_synapse){
-	
+
 	int idx = threadIdx.x + blockIdx.x * blockDim.x;
 	while (idx < total_number_of_synapses) {
 
@@ -269,7 +269,7 @@ __global__ void check_bitarray_for_presynaptic_neuron_spikes(int* d_presynaptic_
 
 		// Get the correct neuron index
 		int neuron_index = CORRECTED_PRESYNAPTIC_ID(presynaptic_neuron_index, presynaptic_is_input);
-		
+
 		// Check the spike
 		int neuron_id_spike_store_start = neuron_index * bitarray_length;
 		int check = 0;
