@@ -155,7 +155,10 @@ __global__ void AdEx_update_membrane_potentials(float *d_membrane_potentials_v,
 	while (idx < total_number_of_neurons) {
 		// Check for refractory period:
 		if ((current_time_in_seconds - d_last_spike_time_of_each_neuron[idx]) >= absolute_refractory_period){
-
+			// Reset the current if we have just overcome the absolute refractory period
+			if ((current_time_in_seconds - d_last_spike_time_of_each_neuron[idx]) == absolute_refractory_period){
+				d_current_injections[idx] = 0.0f;
+			}
 			// Updating the membrane potential
 			float inverse_capacitance = (1.0f / d_membrane_capacitances_Cm[idx]);
 			float membrane_leak_diff = (d_membrane_potentials_v[idx] - d_leak_reversal_potentials_E_L[idx]);
