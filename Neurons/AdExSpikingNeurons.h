@@ -7,7 +7,7 @@
 
 
 struct AdEx_spiking_neuron_parameters_struct : spiking_neuron_parameters_struct {
-	AdEx_spiking_neuron_parameters_struct() : membrane_capacitance_Cm(0.0f), membrane_leakage_conductance_g0(0.0f), absolute_refractory_period(0.002f)  { spiking_neuron_parameters_struct(); }
+	AdEx_spiking_neuron_parameters_struct() : membrane_capacitance_Cm(0.0f), membrane_leakage_conductance_g0(0.0f), absolute_refractory_period(0.002f), background_current(0.0f)  { spiking_neuron_parameters_struct(); }
 
 	float membrane_capacitance_Cm;
 	float membrane_leakage_conductance_g0;
